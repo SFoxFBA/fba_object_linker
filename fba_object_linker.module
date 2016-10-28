@@ -1,0 +1,64 @@
+<?php
+
+function fba_object_linker_menu() {
+  $items = array();
+
+  $items['autocomplete/%'] = array(
+    'description' => 'A callback for our search autocomplete.',
+    'file' => 'includes/search.autocomplete.inc',
+    'page callback' => 'fba_autocomplete_percent',
+    'access callback' => 'user_is_logged_in',
+    'type' => MENU_CALLBACK,
+  );
+
+
+  $items['admin/fba_object_linker/configure'] = array(
+    'title' => 'FBA Object Linker Configuration',
+    'description' => 'Configure the FBA Object Linker Module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fba_object_linker_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'file' => 'fba_object_linker.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/*
+ * Returns a hard-coded default for the concept ontology
+ */
+
+function fba_object_linker_json_default() { //SFOX
+  $returnvalue = '{
+    "ObjLink1": {
+        "name": "Obj Linker 1",
+        "description": "description",
+        "sparql_field": "sparql_field",
+        "form": "FBA Activity",
+        "rdf_relationship": "rdf_relationship",
+        "subject_dsid": "subject_dsid",
+        "subject_namespace_info": "subject_namespace_info",
+        "subject_xpath_title_search": "subject_xpath_title_search",
+        "subject_xpath_data_search": "subject_xpath_data_search",
+        "object_pid_append_required": "object_pid_append_required",
+        "link_type": "link_type",
+        "object_creation_required": "object_creation_required",
+        "symmetry_in_object_datastream_required": "symmetry_in_object_datastream_required",
+        "object_content_model_pid": "object_content_model_pid",
+        "object_collection_pid": "object_collection_pid",
+        "object_namespace_prefix": "object_namespace_prefix",
+        "object_dsid": "object_dsid",
+        "object_namespace_info": "object_namespace_info",
+        "object_datastream_xml": "object_datastream_xml",
+        "object_xpath_title_search": "object_xpath_title_search",
+        "object_xpath_date_create_search": "object_xpath_date_create_search",
+        "object_transform": "object_transform",
+        "object_state": "object_state",
+        "object_xpath_data_search": "object_xpath_data_search",
+        "object_xpath_data_build": "object_xpath_data_build",
+        "object_xpath_data_build_countback": "object_xpath_data_build_countback"
+    }
+}';
+  return $returnvalue;
+}

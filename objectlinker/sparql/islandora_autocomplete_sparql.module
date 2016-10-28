@@ -1,0 +1,160 @@
+<?php
+
+/**
+ * @file
+ *
+ * Contains the hooks this module responds to. As well as any
+ * functions that need to be present for every page request.
+ */
+ini_set("auto_detect_line_endings", FALSE);
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_autocomplete_sparql_menu() {
+
+  return array(
+    'admin/content/autocomplete/ahah/sparql' => array(
+      'file' => 'includes/islandora_autocomplete_sparql.admin.inc',
+      'page callback' => 'islandora_autocomplete_sparql_admin_ahah',
+      'access callback' => 'user_access',
+      'access arguments' => array(PERM_ISLANDORA_AUTOCOMPLETE_ADMIN),
+      'type' => MENU_CALLBACK,
+    ),
+  );
+}
+
+/**
+ * Implements hook_register_autocomplete_source().
+ */
+function islandora_autocomplete_sparql_register_autocomplete_source() {
+  return array(
+    array(
+      'type' => 'sparql',
+      'label' => 'Sparql',
+      'module' => 'islandora_autocomplete_sparql',
+      'form' => array(
+        'type' => 'inc',
+        'file' => 'includes/islandora_autocomplete_sparql.admin'
+      ),
+    )
+  );
+}
+
+/**
+ * Implements hook_delete_autocomplete_url().
+ *
+ * Called when a autocomplete url is deleted, used to notify autocomplete source modules so that
+ * they may do the neccesary clean up required.
+ *
+ * @param string $url_id
+ *   The ID of the url that is to be deleted.
+ */
+function islandora_autocomplete_sparql_delete_autocomplete_url($url_id) {
+  module_load_include('inc', 'islandora_autocomplete_sparql', 'includes/islandora_autocomplete_sparql.db');
+  islandora_autocomplete_sparql_db_delete_url_source($url_id);
+}
+
+/**
+ * Performs a Sparql query.
+ *
+ * Returns an alphabetically ordered list of values that match the query value.
+ *
+ * @param int $url_id
+ *   The unique identifier for the Autocomplete URL.
+ * @param string $query
+ *   The value to insert into the Sparql query.
+ *
+ * @return array
+ */
+function islandora_autocomplete_url_query_sparql($url_id, $query = '', $index = NULL) {
+
+  module_load_include('inc', 'islandora_autocomplete_sparql', 'includes/islandora_autocomplete_sparql.db');
+  module_load_include('inc', 'fedora_repository', 'ObjectHelper');
+  global $user;
+  $source = islandora_autocomplete_sparql_db_get_url_source($url_id);
+  if ($source) {
+    // set variables
+    $sparql_field = <<<EOQ
+$source->sparql_field
+EOQ;
+    $search_term_place_holder = 'search_term_place_holder';
+    $sparql_field = str_replace($search_term_place_holder, $query, $sparql_field);
+    // START OF PROCESSING REQUIRED FOR FIDORA
+    $user_id = $user->islandora_user_pid;
+    //$user_id = 'fba-user:61'; // Hard-coded temporary measure.
+    $user_collection_place_holder = 'user_collection_place_holder';
+    if (strlen($user_id) > 0 && strpos($sparql_field, $user_collection_place_holder)) {
+      $user_collection_ns = str_replace(array('-', ':'), '', $user_id);
+      $user_collection = 'info:fedora/' . $user_collection_ns . ':collection';
+      $sparql_field = str_replace($user_collection_place_holder, $user_collection, $sparql_field);
+    }
+    // END OF PROCESSING REQUIRED FOR FIDORA
+    $object_pid_append_required = $source->object_pid_append_required;
+    $comma_separated = $source->comma_separated;
+
+    // split query if comma separated autocompletion is enabled
+    if ($comma_separated == 1) {
+      // check for last comma
+      $comma_pos = strrpos($query, ',');
+      // if there is a comma found
+      if ($comma_pos !== FALSE) {
+        // split in 2 strings
+        $query = trim(substr($query, $comma_pos + 1));
+      }
+    }
+    if (!empty($query)) {
+      $query = Apache_Solr_Service::escape($query);
+    }
+    else {
+      $returnvalue = $query;
+    }
+  }
+  $limit = -1;
+  $offset = 0;
+  $connection = new RepositoryConnection();
+  $repquery = new RepositoryQuery($connection);
+
+  $query_result = $repquery->sparqlQuery($sparql_field, $limit);
+  //$query_result = ObjectHelper::performRiQuery($sparql_field, 'sparql', $limit, $offset);
+  $returnvalue = islandora_autocomplete_sparql_parse_query_result($query_result, $object_pid_append_required);
+  return $returnvalue;
+}
+
+/**
+ * Parses the Sparql query result to append the PID when appropriate.
+ *
+ * @param array $query_result
+ *   The results from the Sparql Query
+ * @param string $object_pid_append_required
+ *   A flag to indicate whether to append the object PID bounded by delimiters.
+ *
+ * @return array
+ */
+function islandora_autocomplete_sparql_parse_query_result($query_result, $object_pid_append_required) {
+  $processed_result = array();
+  if ($query_result) {
+    foreach ($query_result as $result) {
+      if ($result['title']) {
+        $title = $result['title'];
+        if ($object_pid_append_required) {
+          if ($result['object']) {
+            $pid = $result['object'];
+            $content = $title . " ||" . $pid . "||";
+          }
+          else {
+            $content = $title;
+          }
+        }
+        else {
+          $content = $title;
+        }
+      }
+      else {
+        $content = 'Error: no entry returned';
+      }
+      $processed_result[$content] = $content;
+    }
+  }
+  return $processed_result;
+}

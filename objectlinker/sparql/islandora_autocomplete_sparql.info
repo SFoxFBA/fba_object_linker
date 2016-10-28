@@ -1,0 +1,7 @@
+name = Islandora autocomplete Sparql
+description = Allows users to define autocomplete URL's that get populated by Sparql query.
+package = Islandora Tools
+dependencies[] = islandora_autocomplete
+dependencies[] = islandora_solr_search
+version = 6.x-13.1
+core = 6.x

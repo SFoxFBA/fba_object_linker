@@ -1,0 +1,170 @@
+<?php
+
+/**
+ * @file
+ *
+ * Install hooks for this module.
+ */
+module_load_include('inc', 'islandora_autocomplete_sparql', 'includes/islandora_autocomplete_sparql.db');
+module_load_include('inc', 'islandora_autocomplete', 'includes/islandora_autocomplete.db');
+
+/**
+ * Implementation of hook_install().
+ */
+function islandora_autocomplete_sparql_install() {
+  drupal_install_schema(TABLE_ISLANDORA_AUTOCOMPLETE_SPARQL);
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function islandora_autocomplete_sparql_uninstall() {
+  islandora_autocomplete_sparql_delete_fields();
+  drupal_uninstall_schema(TABLE_ISLANDORA_AUTOCOMPLETE_SPARQL);
+}
+
+
+/**
+ * Deletes the urls that reference sparql as a source. As well as the sparql row via the delete hook.
+ */
+function islandora_autocomplete_sparql_delete_fields() {
+  $sources = islandora_autocomplete_sparql_db_get_sparql_fields();
+  while ($source = db_fetch_object($sources)) {
+    islandora_autocomplete_db_delete_url($source->url_id);
+  }
+}
+
+/**
+ * Implementation of hook_schema().
+ *
+ * @return array
+ */
+function islandora_autocomplete_sparql_schema() {
+  return array(
+    TABLE_ISLANDORA_AUTOCOMPLETE_SPARQL => array(
+      'description' => t('The table for storing islandora autocomplete sparql data.'),
+      'fields' => array(
+        'id' => array(
+          'type' => 'serial',
+          'not null' => TRUE,
+        ),
+        'url_id' => array(
+          'type' => 'int',
+          'not null' => TRUE
+        ),
+        'sparql_field' => array(
+          'type' => 'varchar',
+          'length' => 2048,
+          'not null' => TRUE,
+        ),
+        'rdf_relationship' => array(
+          'type' => 'varchar',
+          'length' => 256,
+          'not null' => TRUE,
+        ),
+        'subject_dsid' => array(
+          'type' => 'varchar',
+          'length' => 128,
+          'not null' => TRUE,
+        ),
+        'subject_namespace_info' => array(
+          'type' => 'varchar',
+          'length' => 2048,
+          'not null' => TRUE,
+        ),
+        'subject_xpath_title_search' => array(
+          'type' => 'varchar',
+          'length' => 1024,
+          'not null' => TRUE,
+        ),
+        'subject_xpath_data_search' => array(
+          'type' => 'varchar',
+          'length' => 1024,
+          'not null' => TRUE,
+        ),
+        'object_pid_append_required' => array(
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'object_creation_required' => array(
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'link_type' => array(
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'symmetry_in_object_datastream_required' => array(
+          'type' => 'int',
+          'not null' => TRUE,
+        ),
+        'object_dsid' => array(
+          'type' => 'varchar',
+          'length' => 128,
+          'not null' => TRUE,
+        ),
+        'object_namespace_info' => array(
+          'type' => 'varchar',
+          'length' => 2048,
+          'not null' => TRUE,
+        ),
+        'object_datastream_xml' => array(
+          'type' => 'varchar',
+          'length' => 4096,
+          'not null' => TRUE,
+        ),
+        'object_xpath_title_search' => array(
+          'type' => 'varchar',
+          'length' => 1024,
+          'not null' => TRUE,
+        ),
+        'object_xpath_date_create_search' => array(
+          'type' => 'varchar',
+          'length' => 1024,
+          'not null' => TRUE,
+        ),
+        'object_content_model_pid' => array(
+          'type' => 'varchar',
+          'length' => 256,
+          'not null' => TRUE,
+        ),
+        'object_collection_pid' => array(
+          'type' => 'varchar',
+          'length' => 256,
+          'not null' => TRUE,
+        ),
+        'object_namespace_prefix' => array(
+          'type' => 'varchar',
+          'length' => 256,
+          'not null' => TRUE,
+        ),
+        'object_transform' => array(
+          'type' => 'varchar',
+          'length' => 1024,
+          'not null' => TRUE,
+        ),
+        'object_state' => array(
+          'type' => 'varchar',
+          'length' => 128,
+          'not null' => TRUE,
+        ),
+        'object_xpath_data_search' => array(
+          'type' => 'varchar',
+          'length' => 1024,
+          'not null' => TRUE,
+        ),
+        'object_xpath_data_build' => array(
+          'type' => 'varchar',
+          'length' => 1024,
+          'not null' => TRUE,
+        ),
+        'object_xpath_data_build_countback' => array(
+          'type' => 'varchar',
+          'length' => 128,
+          'not null' => TRUE,
+        ),
+      ),
+      'primary key' => array('id'),
+    )
+  );
+}

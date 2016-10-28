@@ -1,0 +1,7 @@
+name = FBA Object Linker
+description = FBA Object Linker
+core = 7.x
+package = FBA
+dependencies[] = islandora
+dependencies[] = xml_forms
+configure = admin/fba_object_linker/configure
